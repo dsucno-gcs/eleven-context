@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Information Provider="crm" Name="Context Bridge" Key="context_bridge" Logo="" Remark="Voicebot Context Bridge - muestra contexto de llamadas atendidas por el bot de ElevenLabs" Version="1.0.0" AuthType="none" MaxConcurrentRequest="5" UserAssociation="0" CallJournal="1" CreateNewContact="0" CreateNewTicket="0">
+  <Scenarios>
+    <!-- Authentication: None - usamos API Key via header -->
+    <Scenario Id="AuthMethod" Type="AUTH">
+      <Presets></Presets>
+      <Parameters>
+        <Parameter Name="AuthMethod" Value="none"></Parameter>
+        <Parameter Name="AuthEndPoint" Value=""></Parameter>
+        <Parameter Name="TokenEndPoint" Value=""></Parameter>
+        <Parameter Name="AdditionalQueryString" Value=""></Parameter>
+        <Parameter Name="Scope" Value=""></Parameter>
+        <Parameter Name="CredentialType" Value=""></Parameter>
+        <Parameter Name="Base64EncodedCredential" Value=""></Parameter>
+        <!-- Campo para que el usuario ingrese la API Key -->
+        <Parameter Father="CustomFieldList" Name="api_key" Editor="password" Title="CRM API Key"></Parameter>
+        <!-- Campo para la URL base del conector -->
+        <Parameter Father="CustomFieldList" Name="base_url" Editor="string" Title="URL del Conector (sin barra final, ej: https://contexto-reino.duckdns.org)"></Parameter>
+        <!-- Headers globales -->
+        <Parameter Father="PopulateTemplateString" Name="Authorization" Type="Header" Value="Bearer {{.api_key}}" Description="API Key de autenticacion"></Parameter>
+        <Parameter Father="PopulateTemplateString" Name="Content-Type" Type="Header" Value="application/json" Description="Formato del body"></Parameter>
+        <Parameter Father="PopulateTemplateString" Name="Accept" Type="Header" Value="application/json" Description="Formato de respuesta esperado"></Parameter>
+      </Parameters>
+      <Requests></Requests>
+    </Scenario>
+
+    <!-- Contact search: busca contexto del bot por numero de telefono -->
+    <Scenario Id="SyncContactAuto" Type="REST">
+      <Presets></Presets>
+      <Parameters>
+        <Parameter Name="ContactUrlType" Value="retrieve_from_contact"></Parameter>
+        <Parameter Name="URLFormat" Value=""></Parameter>
+        <Parameter Name="ContactFieldForUri" Value="data.#.contact_url"></Parameter>
+        <Parameter Name="ContactsIdEnable" Value="1"></Parameter>
+        <Parameter Name="FirstNameEnable" Value="1"></Parameter>
+        <Parameter Name="LastNameEnable" Value="0"></Parameter>
+        <Parameter Name="CompanyEnable" Value="0"></Parameter>
+        <Parameter Name="EmailEnable" Value="0"></Parameter>
+        <Parameter Name="BusinessNumberEnable" Value="1"></Parameter>
+        <Parameter Name="BusinessNumber2Enable" Value="0"></Parameter>
+        <Parameter Name="BusinessFaxNumberEnable" Value="0"></Parameter>
+        <Parameter Name="MobileNumberEnable" Value="0"></Parameter>
+        <Parameter Name="MobileNumber2Enable" Value="0"></Parameter>
+        <Parameter Name="HomeNumberEnable" Value="0"></Parameter>
+        <Parameter Name="HomeNumber2Enable" Value="0"></Parameter>
+        <Parameter Name="HomeFaxNumberEnable" Value="0"></Parameter>
+        <Parameter Name="OtherNumberEnable" Value="0"></Parameter>
+        <Parameter Name="ZipCodeEnable" Value="0"></Parameter>
+        <Parameter Name="StreetEnable" Value="0"></Parameter>
+        <Parameter Name="CityEnable" Value="0"></Parameter>
+        <Parameter Name="StateEnable" Value="0"></Parameter>
+        <Parameter Name="CountryEnable" Value="0"></Parameter>
+        <Parameter Name="RemarkEnable" Value="0"></Parameter>
+        <Parameter Name="CustomValueEnable" Value="0"></Parameter>
+      </Parameters>
+      <Requests>
+        <Request Name="Contacts" Method="GET" ResponseType="application/json" RequestEncoding="" URLFormat="{{.base_url}}/crm/contacts/search?phone={{UrlEncode .Phone}}">
+          <Parameters></Parameters>
+          <Outputs>
+            <Output Name="ContactsId" Path="data.#.id" Type="string"></Output>
+            <Output Name="FirstName" Path="data.#.first_name" Type="string"></Output>
+            <Output Name="BusinessNumber" Path="data.#.phone" Type="string"></Output>
+          </Outputs>
+        </Request>
+      </Requests>
+    </Scenario>
+
+    <!-- Call Journal: registra CDR al finalizar la llamada -->
+    <Scenario Id="CallJournal" Type="REST">
+      <Presets></Presets>
+      <Parameters>
+        <Parameter Name="EnableSubject" Value="1"></Parameter>
+        <Parameter Name="Subject" Value="{{.Communication_Type}} - {{.Call_Log_Status}}"></Parameter>
+        <Parameter Name="EnableDescription" Value="1"></Parameter>
+        <Parameter Name="Description" Value="{{.Time}} {{.Communication_Type}} {{.Call_Log_Status}} de {{.Call_From}} a {{.Call_To}} - Duracion: {{.Talk_Duration}}"></Parameter>
+        <Parameter Name="EnablePlayCallRecording" Value="0"></Parameter>
+        <Parameter Name="PlayCallRecording" Value="0"></Parameter>
+      </Parameters>
+      <Requests>
+        <Request Name="CallJournal" Method="POST" Weight="0" ResponseType="application/json" RequestEncoding="" URLFormat="{{.base_url}}/crm/journal">
+          <Parameters>
+            <Parameter Name="Data" Type="Body" Value="{&quot;Subject&quot;:&quot;{{.Subject}}&quot;,&quot;Description&quot;:&quot;{{.Description}}&quot;,&quot;Call_From&quot;:&quot;{{.Call_From}}&quot;,&quot;Call_To&quot;:&quot;{{.CalleeNumber}}&quot;,&quot;Talk_Duration_Sec&quot;:&quot;{{.Talk_Duration_Sec}}&quot;,&quot;Call_Log_Status&quot;:&quot;{{.Call_Log_Status}}&quot;,&quot;Communication_Type&quot;:&quot;{{.Communication_Type}}&quot;,&quot;ContactId&quot;:&quot;{{.ContactId}}&quot;,&quot;StartTimeUnix&quot;:&quot;{{.StartTimeUnix}}&quot;,&quot;CallerNumber&quot;:&quot;{{.CallerNumber}}&quot;,&quot;Agente_Nombre&quot;:&quot;{{.CalleeName}}&quot;,&quot;Agente_Interno&quot;:&quot;{{.CalleeNumber}}&quot;}"></Parameter>
+          </Parameters>
+          <Outputs></Outputs>
+        </Request>
+      </Requests>
+    </Scenario>
+
+  </Scenarios>
+</Information>

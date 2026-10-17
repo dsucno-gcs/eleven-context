@@ -1,0 +1,29 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+desktop.ini
+
+# Snapshots de la config de ElevenLabs: contienen el INGEST_API_KEY en claro
+# (header Authorization del webhook guardar_contexto). El repo es publico.
+backups/*.json
+!backups/README.md
+# Excepcion: solo texto del prompt, sin credenciales. Verificado.
+!backups/elevenlabs_agent_prompt_PROD_backup.json
+
+# Capturas SIP: llevan numeros de telefono reales, IPs internas y Call-IDs.
+# Se conservan localmente como evidencia, pero no van a un repo publico.
+*.pcap
+*.pcapng
+
+# Manuales del fabricante: 55 MB entre los dos, se bajan del sitio de Yeastar.
+recursos/manuales/*.pdf
+
+# Planillas de tipificacion actual del cliente: DNI y telefonos reales de pacientes.
+recursos/*.ods
+
+# Documentos generados para mostrar el proyecto (resumenes, PDFs de presentacion).
+# Se regeneran del contenido de los .md del repo; no hace falta versionarlos.
+docu-output/
